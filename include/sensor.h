@@ -6,6 +6,7 @@
 void init_sensor();
 
 void set_sensor_limit(uint16_t limit);
+void save_sensor_limit();
 void increase_sensor_limit();  
 void decrease_sensor_limit();
 uint16_t get_sensor_limit();

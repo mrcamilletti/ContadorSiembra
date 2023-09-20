@@ -46,8 +46,8 @@ void display_main_screen_print(display_params_t * params)
   char line0[17];
   char line1[17];  
 
-  snprintf(line0, 17, "ACCION  | C:%4d", params->counter);
-  snprintf(line1, 17, "%8lu| D:%4d", params->actions, params->limit);
+  snprintf(line0, 17, "ACCION  | C:%4u", params->counter);
+  snprintf(line1, 17, "%8lu| D:%4u", params->actions, params->limit);
 
   lcd.setCursor(0,0);
   lcd.print(line0);

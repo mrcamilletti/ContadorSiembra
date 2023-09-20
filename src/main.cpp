@@ -3,6 +3,10 @@
 #include "Wire.h"
 #include "LiquidCrystal_PCF8574.h"
 
+#ifdef EEPROM_RESET
+#include "EEPROM.h"
+#endif
+
 #include "relay.h"
 #include "sensor.h"
 #include "display.h"
@@ -91,6 +95,13 @@ static inline void run_loop()
  */
 void setup()
 {
+
+#ifdef EEPROM_RESET
+  EEPROM.begin();
+  EEPROM.write(0,0xFF);
+  EEPROM.write(1,0xFF);
+#endif
+
   Wire.begin();
 
 //  Serial.begin(9600);
@@ -163,7 +174,7 @@ static void mode_program_loop()
 static void mode_counter_setup()
 {
   menu_buttons_deactivate();
- 
+   
   display_params_t data = {
     .limit = get_sensor_limit(),
     .counter = contador_old,
@@ -171,7 +182,8 @@ static void mode_counter_setup()
   };
 
   display_main_screen_print(&data);
-  
+  save_sensor_limit();
+
   set_next_state(MODE_COUNTER_LOOP);
 }
 
