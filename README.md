@@ -7,7 +7,7 @@ Todas las entradas/salidas digitales son con lógica de 3.3V
 
 - MCU: Atmega 328 PU (16Mhz)
 - DISPLAY: LCD 16x02 + PCF8574
-- PULSADORES: 3 (Menu, Subir, Bajar)
+- PULSADORES: 3 (MENU, ARRIBA, ABAJO)
 - SENSOR: Accionamiento digital de tipo colector abierto (Transistor u Opto acoplador)
 - SALIDA: Pulso digital de 500ms (Relé u Opto acoplador)
 
