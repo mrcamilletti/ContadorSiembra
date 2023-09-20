@@ -81,11 +81,8 @@ static bool set_next_state(enum app_mode next_mode)
 }
 
 static inline void run_loop()
-{
-  if (mode_loop_f[global_mode] != NULL)
-  {
-    mode_loop_f[global_mode]();
-  }
+{  
+  mode_loop_f[global_mode]();
 }
 
 
@@ -108,8 +105,7 @@ void setup()
   menu_button_config(0, button_down);
   menu_button_config(1, button_up);
 
-  mode_init();
-  set_next_state(MODE_PROGRAM_SETUP);
+  mode_init();  
 }
 
 /**
