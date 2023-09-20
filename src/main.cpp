@@ -1,12 +1,9 @@
 #include <Arduino.h>
-#include "project.h"
 #include "Wire.h"
+#include "EEPROM.h"
 #include "LiquidCrystal_PCF8574.h"
 
-#ifdef EEPROM_RESET
-#include "EEPROM.h"
-#endif
-
+#include "project.h"
 #include "relay.h"
 #include "sensor.h"
 #include "display.h"
@@ -96,12 +93,6 @@ static inline void run_loop()
 void setup()
 {
 
-#ifdef EEPROM_RESET
-  EEPROM.begin();
-  EEPROM.write(0,0xFF);
-  EEPROM.write(1,0xFF);
-#endif
-
   Wire.begin();
 
 //  Serial.begin(9600);
@@ -109,13 +100,25 @@ void setup()
 
   // find_i2c_devices();
 
-  init_display();
-  init_sensor();
-  init_relay();
-
   menu_button_config(0, button_down);
   menu_button_config(1, button_up);
 
+  init_display();
+
+  /* Factory Reset */
+  if ((PINB & (bit(PIN0) | bit(PIN1))) == 0)
+  {
+    EEPROM.begin();
+    EEPROM.write(0,0xFF);
+    EEPROM.write(1,0xFF);
+
+    display_line("FACTORY RESET", 0);
+    delay(1000);
+  }
+
+  
+  init_sensor();
+  init_relay();
   mode_init();  
 }
 
