@@ -46,8 +46,8 @@ void display_main_screen_print(display_params_t * params)
   char line0[17];
   char line1[17];  
 
-  snprintf(line0, 17, "C:%4d |  L:%4d", params->counter, params->limit);
-  snprintf(line1, 17, "ACCION: %8lu", params->actions);
+  snprintf(line0, 17, "ACCION  | C:%4d", params->counter);
+  snprintf(line1, 17, "%8lu| D:%4d", params->actions, params->limit);
 
   lcd.setCursor(0,0);
   lcd.print(line0);
@@ -59,19 +59,21 @@ void display_main_screen_update(display_params_t * params)
 {
   char counter_str[5];
   char limit_str[5];
-  char actions_str[5];
+  char actions_str[10];
   
   snprintf(counter_str, 5, "%4u", params->counter);
   snprintf(limit_str, 5, "%4u", params->limit);
-  snprintf(actions_str, 5, "%8lu", params->actions);
+  snprintf(actions_str, 10, "%8lu", params->actions);
 
   lcd.home();
-  lcd.setCursor(2,0);
-  lcd.print(counter_str);  
   lcd.setCursor(12,0);
-  lcd.print(limit_str);    
-  lcd.setCursor(8,1);
+  lcd.print(counter_str);  
+  
+  lcd.setCursor(0,1);
   lcd.print(actions_str);
+
+  lcd.setCursor(12,1);
+  lcd.print(limit_str);    
 }
 
 
@@ -91,7 +93,7 @@ void display_second_screen_print(display_params_t * params)
   char line1[17];  
 
   snprintf(line0, 17, "CONFIGURACION   ");
-  snprintf(line1, 17, "> Limite:   %4u", params->limit);
+  snprintf(line1, 17, "> Divisor:  %4u", params->limit);
 
   lcd.setCursor(0,0);
   lcd.print(line0);
