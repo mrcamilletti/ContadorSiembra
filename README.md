@@ -6,7 +6,6 @@ Sistema para contabilizar pulsos y accionar una salida digital de uso específic
 Todas las entradas/salidas digitales son con lógica de 3.3V
 
 - MCU: Atmega 328 PU (16Mhz)
-- EEPROM: AT24C32N
 - DISPLAY: LCD 16x02 + PCF8574
 - PULSADORES: 3 (Menu, Subir, Bajar)
 - SENSOR: Accionamiento digital de tipo colector abierto (Transistor u Opto acoplador)
