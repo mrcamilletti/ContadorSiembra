@@ -12,8 +12,7 @@ static enum app_mode mode = INITIAL_MODE;
 
 static volatile unsigned long mode_button_ts = 0;
 
-static uint16_t contador_old = 0;
-static uint16_t limite_old;
+static bool limit_data_edited = false;
 
 static display_params_t display_data = { 0 };
 
@@ -39,11 +38,13 @@ static void (*mode_loop_f[MODE_MAX])(void) = {
 static void button_down(uint8_t port)
 {
   sensor_limit_decrease();
+  limit_data_edited = true;
 }
 
 static void button_up(uint8_t port)
 {
   sensor_limit_increase();
+  limit_data_edited = true;
 }
 
 static void mode_isr()
@@ -137,9 +138,8 @@ void setup()
   mode_init();
 
   /* Update variables */
-
-  limite_old = sensor_limit_get();
-  display_data.limit = limite_old;
+  
+  display_data.limit = sensor_limit_get();
 
 }
 
@@ -184,18 +184,15 @@ static void mode_program_loop()
 
   menu_button_loop();
 
-  /* Continue if changes to parameters were made, if not return */
+  /* Continue if changes to limit data was made, if not return */
 
-  uint16_t limite = sensor_limit_get();
-
-  if (limite == limite_old)
+  if (limit_data_edited == false)
     return;
 
-  limite_old = limite;
-
   /* Update display */
-
-  display_data.limit = limite;
+  limit_data_edited = false;
+  
+  display_data.limit = sensor_limit_get();
   display_second_screen_update(&display_data);
 }
 
@@ -226,20 +223,14 @@ static void mode_counter_setup()
  */
 static void mode_counter_loop()
 {
-  /* Continue if counter changes, if not return */
+  /* Continue if new data available, if not return */
 
-  uint16_t contador = sensor_counter_get();
-
-  if (contador_old == contador)
+  if (sensor_data_available() == false)
     return;
-
-  /* Update reference value */
-
-  contador_old = contador;
 
   /* Update and display display_data */
 
-  display_data.counter = contador;
+  display_data.counter = sensor_counter_get();
   display_data.actions = sensor_actions_get();
 
   display_main_screen_update(&display_data);

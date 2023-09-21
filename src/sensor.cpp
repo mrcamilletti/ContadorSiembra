@@ -5,16 +5,18 @@
 #include "sensor.h"
 #include "relay.h"
 
-
+static bool new_data = false;
 static uint16_t _limite = 1;
 static uint16_t _contador = 0;
 static uint32_t _acciones = 0;
 
 static unsigned long time_sensor = 0;
+
 static void sensor_isr()
 {
   DEBOUNCE_ISR(time_sensor, SENSOR_DEBOUNCE_MS);
 
+  new_data = true;
   _contador++;
   if (_contador == _limite)
   {
@@ -82,4 +84,15 @@ uint16_t sensor_counter_get()
 uint32_t sensor_actions_get()
 {
     return _acciones;
+}
+
+bool sensor_data_available()
+{
+  if (new_data)
+  {
+    new_data = false;
+    return true;
+  }
+
+  return false;
 }
