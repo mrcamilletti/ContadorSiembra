@@ -14,6 +14,7 @@ static enum app_mode global_mode = INITIAL_MODE;
 
 static uint16_t contador_old = 0;
 static uint16_t limite_old = 1;
+static display_params_t data = {0};
 
 static void mode_isr();
 
@@ -30,7 +31,6 @@ static void (*mode_loop_f[MODE_MAX])(void) = {
     mode_counter_setup,
     mode_counter_loop};
 
-
 /**
  * MENU BUTTON IO FUNCTIONS
  */
@@ -44,7 +44,6 @@ static void button_up(uint8_t port)
 {
   increase_sensor_limit();
 }
-
 
 static void mode_isr()
 {
@@ -64,7 +63,7 @@ static void mode_isr()
   }
 }
 
-static void mode_init()
+static inline void mode_init()
 {
   DDRD &= ~(bit(DD3)); // set PD3 as input (D3 ext int 1)
   PORTD |= bit(PORT3); // set PD3 as pullup (D3 ext int 1)
@@ -82,44 +81,59 @@ static bool set_next_state(enum app_mode next_mode)
 }
 
 static inline void run_loop()
-{  
+{
   mode_loop_f[global_mode]();
 }
-
 
 /**
  * GENERAL SETUP
  */
 void setup()
 {
+  /* Initialize instances */
 
   Wire.begin();
 
-//  Serial.begin(9600);
-//  while (!Serial);
+#if CONFIG_USE_SERIAL_OUTPUT
+  Serial.begin(9600);
+  while (!Serial);
+#endif
 
-  // find_i2c_devices();
+#if CONFIG_CHECK_I2C_DEVICES
+  find_i2c_devices();
+#endif
 
+  /* Configure menu buttons and function callbacks */
   menu_button_config(0, button_down);
   menu_button_config(1, button_up);
 
+  /* Initialize display (I2C) */
+
   init_display();
 
-  /* Factory Reset */
+  /* Check if user requested a factory reset (UP & DOWN buttons pressed) */
+
   if ((PINB & (bit(PIN0) | bit(PIN1))) == 0)
   {
     EEPROM.begin();
-    EEPROM.write(0,0xFF);
-    EEPROM.write(1,0xFF);
+    EEPROM.write(0, 0xFF);
+    EEPROM.write(1, 0xFF);
 
     display_line("FACTORY RESET", 0);
     delay(1000);
   }
 
-  
+  /* Initialize sensor (digital input) */
+
   init_sensor();
+
+  /* Initialize relayu (digital output) */
+
   init_relay();
-  mode_init();  
+
+  /* Initialize app mode switch button and callbacks */
+
+  mode_init();
 }
 
 /**
@@ -128,25 +142,29 @@ void setup()
 void loop()
 {
   /* STATE MACHINE LOOP*/
+
   run_loop();
 
   /* IO CHECK LOOP */
+
   relay_loop();
 }
 
 /**
  * PROGRAMMING MODE SETUP
  */
-static inline void mode_program_setup()
+static void mode_program_setup()
 {
+  /* Activate ISR call from menu buttons */
+
   menu_buttons_activate();
-  
-  display_params_t data = {
-    .limit = limite_old
-  };
-  
+
+  /* Print display with current data */
+
   display_second_screen_print(&data);
-  
+
+  /* Switch to next state */
+
   set_next_state(MODE_PROGRAM_LOOP);
 }
 
@@ -155,20 +173,23 @@ static inline void mode_program_setup()
  */
 static void mode_program_loop()
 {
-  menu_button_loop();  
+  /* Run menu button callback functions */
 
-  uint16_t limite = get_sensor_limit();    
-  
+  menu_button_loop();
+
+  /* Continue if changes to parameters were made, if not return */
+
+  uint16_t limite = get_sensor_limit();
+
   if (limite == limite_old)
     return;
-  
+
   limite_old = limite;
 
-  display_params_t data = {
-    .limit = limite
-  };
-  
-  display_second_screen_print(&data);  
+  /* Update display */
+
+  data.limit = limite;
+  display_second_screen_update(&data);
 }
 
 /**
@@ -176,16 +197,19 @@ static void mode_program_loop()
  */
 static void mode_counter_setup()
 {
+  /* Deactivate ISR call from menu buttons */
+
   menu_buttons_deactivate();
-   
-  display_params_t data = {
-    .limit = get_sensor_limit(),
-    .counter = contador_old,
-    .actions = get_sensor_actions()    
-  };
+
+  /* Save values */
+
+  save_sensor_limit();
+
+  /* Print display with current data */
 
   display_main_screen_print(&data);
-  save_sensor_limit();
+
+  /* Move to next state */
 
   set_next_state(MODE_COUNTER_LOOP);
 }
@@ -194,19 +218,22 @@ static void mode_counter_setup()
  * COUNTER MODE LOOP
  */
 static void mode_counter_loop()
-{  
+{
+  /* Continue if counter changes, if not return */
+
   uint16_t contador = get_sensor_counter();
 
   if (contador_old == contador)
     return;
 
+  /* Update reference value */
+
   contador_old = contador;
 
-  display_params_t data = {
-    .limit = get_sensor_limit(),
-    .counter = contador,
-    .actions = get_sensor_actions()    
-  };
+  /* Update and display data */
+
+  data.counter = contador;
+  data.actions = get_sensor_actions();
 
   display_main_screen_update(&data);
 }
@@ -216,8 +243,7 @@ static void mode_counter_loop()
  */
 
 /* PIN CHANGE PORT B ISR (MENU CONTROL) */
-unsigned long pcint_ts;
 ISR(PCINT0_vect)
 {
-  menu_button_isr(); 
+  menu_button_isr();
 }
