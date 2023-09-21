@@ -8,22 +8,23 @@
 #include "sensor.h"
 #include "display.h"
 
-static enum app_mode mode = INITIAL_MODE;
+/* DISPLAY GLOBAL DATA */
+static display_params_t display_data = { 0 };
+static bool sensor_limit_changed = false;
+
+/* APP MODE MANAGEMENT PRIVATE VARIABLES */
 
 static volatile unsigned long mode_button_ts = 0;
-
-static bool limit_data_edited = false;
-
-static display_params_t display_data = { 0 };
-
+static enum app_mode mode = INITIAL_MODE;
 static void mode_isr();
-
 static bool mode_next(enum app_mode next_mode);
 
 static void mode_program_setup();
 static void mode_program_loop();
 static void mode_counter_setup();
 static void mode_counter_loop();
+
+/* APP MODE ARRAY OF SETUP/LOOP FUNCTIONS */
 
 static void (*mode_loop_f[MODE_MAX])(void) = {
     mode_program_setup,
@@ -38,13 +39,13 @@ static void (*mode_loop_f[MODE_MAX])(void) = {
 static void button_down(uint8_t port)
 {
   sensor_limit_decrease();
-  limit_data_edited = true;
+  sensor_limit_changed = true;
 }
 
 static void button_up(uint8_t port)
 {
   sensor_limit_increase();
-  limit_data_edited = true;
+  sensor_limit_changed = true;
 }
 
 static void mode_isr()
@@ -186,12 +187,12 @@ static void mode_program_loop()
 
   /* Continue if changes to limit data was made, if not return */
 
-  if (limit_data_edited == false)
+  if (sensor_limit_changed == false)
     return;
 
   /* Update display */
-  limit_data_edited = false;
-  
+  sensor_limit_changed = false;
+
   display_data.limit = sensor_limit_get();
   display_second_screen_update(&display_data);
 }
