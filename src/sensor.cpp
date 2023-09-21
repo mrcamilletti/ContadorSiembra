@@ -24,7 +24,7 @@ static void sensor_isr()
   }
 }
 
-void init_sensor()
+void sensor_init()
 {
   EEPROM.begin();
   EEPROM.get(CONFIG_LIMIT_EEPROM_ADDR, _limite);
@@ -38,12 +38,12 @@ void init_sensor()
   attachInterrupt(0, sensor_isr, FALLING);
 }
 
-void save_sensor_limit()
+void sensor_save_settings()
 {
   EEPROM.put(CONFIG_LIMIT_EEPROM_ADDR, _limite);
 }
 
-void set_sensor_limit(uint16_t limit)
+void sensor_limit_set(uint16_t limit)
 {
     if (limit == 0) 
         return;
@@ -51,7 +51,7 @@ void set_sensor_limit(uint16_t limit)
     _limite = limit;
 }
 
-void increase_sensor_limit()
+void sensor_limit_increase()
 {
     if (_limite < MAX_COUNTER_LIMIT)
     {
@@ -59,7 +59,7 @@ void increase_sensor_limit()
     }
 }
 
-void decrease_sensor_limit()
+void sensor_limit_decrease()
 {
     if (_limite > 1)
     {
@@ -68,18 +68,18 @@ void decrease_sensor_limit()
 }
 
 
-uint16_t get_sensor_limit()
+uint16_t sensor_limit_get()
 {
   return _limite;
 }
 
 
-uint16_t get_sensor_counter()
+uint16_t sensor_counter_get()
 {
     return _contador;
 }
 
-uint32_t get_sensor_actions()
+uint32_t sensor_actions_get()
 {
     return _acciones;
 }

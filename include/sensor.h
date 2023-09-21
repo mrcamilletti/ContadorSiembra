@@ -3,15 +3,15 @@
 
 #include <Arduino.h>
 
-void init_sensor();
+void sensor_init();
 
-void set_sensor_limit(uint16_t limit);
-void save_sensor_limit();
-void increase_sensor_limit();  
-void decrease_sensor_limit();
-uint16_t get_sensor_limit();
+void sensor_limit_set(uint16_t limit);
+void sensor_save_settings();
+void sensor_limit_increase();  
+void sensor_limit_decrease();
+uint16_t sensor_limit_get();
 
-uint16_t get_sensor_counter();
-uint32_t get_sensor_actions();
+uint16_t sensor_counter_get();
+uint32_t sensor_actions_get();
 
 #endif /* E87ADF19_F27F_4ABF_8C81_A20B1CC7D5E6 */

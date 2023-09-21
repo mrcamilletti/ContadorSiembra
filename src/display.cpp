@@ -22,7 +22,7 @@ static uint8_t button_pressed_mask = 0;
  *  |  A  :  9  9  9  9     
  */
 
-void init_display()
+void display_init()
 {
   DDRC &= ~(bit(DD4) | bit(DD5));     // Set pins as inputs
   PORTC |= (bit(PORT4) | bit(PORT5)); // Set pull-up

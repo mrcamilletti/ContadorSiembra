@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-void init_relay();
+void relay_init();
 void relay_on();
 void relay_on_from_isr(unsigned long * ts);
 void relay_off();

@@ -7,7 +7,7 @@ static volatile unsigned long time_relay = 0;
  * RELAY IO FUNCTIONS
  */
 
-void init_relay()
+void relay_init()
 {
   DDRB |= (bit(DD2));     // Set pins as outputs
   PORTB &= ~(bit(PORT2)); // Set outputs as LOW

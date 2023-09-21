@@ -8,17 +8,18 @@
 #include "sensor.h"
 #include "display.h"
 
-static volatile unsigned long time_mode = 0;
+static enum app_mode mode = INITIAL_MODE;
 
-static enum app_mode global_mode = INITIAL_MODE;
+static volatile unsigned long mode_button_ts = 0;
 
 static uint16_t contador_old = 0;
-static uint16_t limite_old = 1;
-static display_params_t data = {0};
+static uint16_t limite_old;
+
+static display_params_t display_data = { 0 };
 
 static void mode_isr();
 
-static bool set_next_state(enum app_mode next_mode);
+static bool mode_next(enum app_mode next_mode);
 
 static void mode_program_setup();
 static void mode_program_loop();
@@ -37,25 +38,25 @@ static void (*mode_loop_f[MODE_MAX])(void) = {
 
 static void button_down(uint8_t port)
 {
-  decrease_sensor_limit();
+  sensor_limit_decrease();
 }
 
 static void button_up(uint8_t port)
 {
-  increase_sensor_limit();
+  sensor_limit_increase();
 }
 
 static void mode_isr()
 {
-  DEBOUNCE_ISR(time_mode, BUTTON_DEBOUNCE_MS);
+  DEBOUNCE_ISR(mode_button_ts, BUTTON_DEBOUNCE_MS);
 
-  switch (global_mode)
+  switch (mode)
   {
   case MODE_PROGRAM_LOOP:
-    global_mode = MODE_COUNTER_SETUP;
+    mode = MODE_COUNTER_SETUP;
     break;
   case MODE_COUNTER_LOOP:
-    global_mode = MODE_PROGRAM_SETUP;
+    mode = MODE_PROGRAM_SETUP;
     break;
 
   default:
@@ -70,19 +71,19 @@ static inline void mode_init()
   attachInterrupt(1, mode_isr, FALLING);
 }
 
-static bool set_next_state(enum app_mode next_mode)
+static bool mode_next(enum app_mode next)
 {
-  if (!(next_mode < MODE_MAX))
+  if (!(next < MODE_MAX))
     return false;
 
-  global_mode = next_mode;
+  mode = next;
 
   return true;
 }
 
-static inline void run_loop()
+static inline void mode_loop()
 {
-  mode_loop_f[global_mode]();
+  mode_loop_f[mode]();
 }
 
 /**
@@ -109,7 +110,7 @@ void setup()
 
   /* Initialize display (I2C) */
 
-  init_display();
+  display_init();
 
   /* Check if user requested a factory reset (UP & DOWN buttons pressed) */
 
@@ -125,15 +126,21 @@ void setup()
 
   /* Initialize sensor (digital input) */
 
-  init_sensor();
-
+  sensor_init();
+  
   /* Initialize relayu (digital output) */
 
-  init_relay();
+  relay_init();
 
   /* Initialize app mode switch button and callbacks */
 
   mode_init();
+
+  /* Update variables */
+
+  limite_old = sensor_limit_get();
+  display_data.limit = limite_old;
+
 }
 
 /**
@@ -143,7 +150,7 @@ void loop()
 {
   /* STATE MACHINE LOOP*/
 
-  run_loop();
+  mode_loop();
 
   /* IO CHECK LOOP */
 
@@ -159,13 +166,13 @@ static void mode_program_setup()
 
   menu_buttons_activate();
 
-  /* Print display with current data */
+  /* Print display with current display_data */
 
-  display_second_screen_print(&data);
+  display_second_screen_print(&display_data);
 
   /* Switch to next state */
 
-  set_next_state(MODE_PROGRAM_LOOP);
+  mode_next(MODE_PROGRAM_LOOP);
 }
 
 /**
@@ -179,7 +186,7 @@ static void mode_program_loop()
 
   /* Continue if changes to parameters were made, if not return */
 
-  uint16_t limite = get_sensor_limit();
+  uint16_t limite = sensor_limit_get();
 
   if (limite == limite_old)
     return;
@@ -188,8 +195,8 @@ static void mode_program_loop()
 
   /* Update display */
 
-  data.limit = limite;
-  display_second_screen_update(&data);
+  display_data.limit = limite;
+  display_second_screen_update(&display_data);
 }
 
 /**
@@ -203,15 +210,15 @@ static void mode_counter_setup()
 
   /* Save values */
 
-  save_sensor_limit();
+  sensor_save_settings();
 
-  /* Print display with current data */
+  /* Print display with current display_data */
 
-  display_main_screen_print(&data);
+  display_main_screen_print(&display_data);
 
   /* Move to next state */
 
-  set_next_state(MODE_COUNTER_LOOP);
+  mode_next(MODE_COUNTER_LOOP);
 }
 
 /**
@@ -221,7 +228,7 @@ static void mode_counter_loop()
 {
   /* Continue if counter changes, if not return */
 
-  uint16_t contador = get_sensor_counter();
+  uint16_t contador = sensor_counter_get();
 
   if (contador_old == contador)
     return;
@@ -230,12 +237,12 @@ static void mode_counter_loop()
 
   contador_old = contador;
 
-  /* Update and display data */
+  /* Update and display display_data */
 
-  data.counter = contador;
-  data.actions = get_sensor_actions();
+  display_data.counter = contador;
+  display_data.actions = sensor_actions_get();
 
-  display_main_screen_update(&data);
+  display_main_screen_update(&display_data);
 }
 
 /**

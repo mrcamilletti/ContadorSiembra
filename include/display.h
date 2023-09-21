@@ -9,7 +9,7 @@ typedef struct display_params {
     uint32_t actions;
 } display_params_t;
 
-void init_display();
+void display_init();
 void display_clear();
 void display_line(const char * str, uint8_t row);
 void display_num_u16(uint16_t number, uint8_t row);
