@@ -11,6 +11,7 @@
 /* DISPLAY GLOBAL DATA */
 static display_params_t display_data = { 0 };
 static bool sensor_limit_changed = false;
+static bool sensor_limit_unsaved = false;
 
 /* APP MODE MANAGEMENT PRIVATE VARIABLES */
 
@@ -192,6 +193,7 @@ static void mode_program_loop()
 
   /* Update display */
   sensor_limit_changed = false;
+  sensor_limit_unsaved = true;
 
   display_data.limit = sensor_limit_get();
   display_second_screen_update(&display_data);
@@ -206,9 +208,14 @@ static void mode_counter_setup()
 
   menu_buttons_deactivate();
 
-  /* Save values */
+  /* Save values if required */
 
-  sensor_save_settings();
+  if (sensor_limit_unsaved == true)
+  {
+    sensor_limit_unsaved = false;
+    sensor_save_settings();
+  }
+    
 
   /* Print display with current display_data */
 
