@@ -12,7 +12,6 @@ typedef struct display_params {
 void display_init();
 void display_clear();
 void display_line(const char * str, uint8_t row);
-void display_num_u16(uint16_t number, uint8_t row);
 void display_main_screen_print(display_params_t * params);
 void display_main_screen_update(display_params_t * params);
 void display_second_screen_print(display_params_t * params);

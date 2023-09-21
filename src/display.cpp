@@ -65,7 +65,6 @@ void display_main_screen_update(display_params_t * params)
   snprintf(limit_str, 5, "%4u", params->limit);
   snprintf(actions_str, 10, "%8lu", params->actions);
 
-  lcd.home();
   lcd.setCursor(12,0);
   lcd.print(counter_str);  
   
@@ -77,18 +76,8 @@ void display_main_screen_update(display_params_t * params)
 }
 
 
-void display_num_u16(uint16_t number, uint8_t row)
-{ 
-  char printNum[5];
-  sprintf(printNum, "%4d", number);
-
-  lcd.setCursor(12, row);
-  lcd.print(printNum);
-}
-
 void display_second_screen_print(display_params_t * params)
 {
-  lcd.home();
   char line0[17];
   char line1[17];  
 
