@@ -20,18 +20,93 @@ static enum app_mode mode = INITIAL_MODE;
 static void mode_isr();
 static bool mode_next(enum app_mode next_mode);
 
-static void mode_program_setup();
-static void mode_program_loop();
+static void mode_menuconfig_setup();
+static void mode_menuconfig_loop();
 static void mode_counter_setup();
 static void mode_counter_loop();
 
 /* APP MODE ARRAY OF SETUP/LOOP FUNCTIONS */
 
 static void (*mode_loop_f[MODE_MAX])(void) = {
-    mode_program_setup,
-    mode_program_loop,
+    mode_menuconfig_setup,
+    mode_menuconfig_loop,
     mode_counter_setup,
     mode_counter_loop};
+
+/**
+ * SCREEN CONTENT
+*/
+static const char * fmt_str_l16 = "%16s";
+static const char * fmt_u16_l4 = "%4u";
+static const char * fmt_u32_l8 = "%8u";
+
+static const char * factory_reset_screen = "FACTORY RESET";
+static const char * counter_screen[2] = {
+  "ACCION  | C:    ",
+  "        | D:    "
+};
+static const char * menuconfig_screen[2] = {
+  "CONFIGURACION   ",
+  "> Limite        "
+};
+
+static display_frame_t frame_counter_screen[2] = {
+  {
+    .type = DISPLAY_TYPE_STR,
+    .data = (void*) counter_screen[0],
+    .format = fmt_str_l16,
+    .pos_x = 0,
+    .pos_y = 0
+  },
+  {
+    .type = DISPLAY_TYPE_STR,
+    .data = (void*) counter_screen[1],
+    .format = fmt_str_l16,
+    .pos_x = 0,    
+    .pos_y = 1
+  }
+};
+
+static display_frame_t frame_menuconfig_screen[2] = {
+  {
+    .type = DISPLAY_TYPE_STR,
+    .data = (void*) menuconfig_screen[0],
+    .format = fmt_str_l16,
+    .pos_x = 0,
+    .pos_y = 0
+  },
+  {
+    .type = DISPLAY_TYPE_STR,
+    .data = (void*) menuconfig_screen[1],
+    .format = fmt_str_l16,
+    .pos_x = 0,    
+    .pos_y = 1
+  }
+};
+
+static display_frame_t frame_limit = {
+  .type = DISPLAY_TYPE_U16,
+  .data = &(display_data.limit),
+  .format = fmt_u16_l4,
+  .pos_x = 12,
+  .pos_y = 1
+};
+
+static display_frame_t frame_counter = {
+  .type = DISPLAY_TYPE_U16,
+  .data = &(display_data.counter),
+  .format = fmt_u16_l4,
+  .pos_x = 12,
+  .pos_y = 0
+};
+
+static display_frame_t frame_actions = {
+  .type = DISPLAY_TYPE_U32,
+  .data = &(display_data.actions),
+  .format = fmt_u32_l8,
+  .pos_x = 0,
+  .pos_y = 1
+};
 
 /**
  * MENU BUTTON IO FUNCTIONS
@@ -123,10 +198,19 @@ void setup()
     EEPROM.write(0, 0xFF);
     EEPROM.write(1, 0xFF);
 
-    display_line("FACTORY RESET", 0);
+    display_frame_t frame = {
+      .type = DISPLAY_TYPE_STR,
+      .data = (void*) factory_reset_screen,
+      .format = fmt_str_l16,
+      .pos_x = 0,
+      .pos_y = 0
+    };
+
+    display_frame(&frame);
+
     delay(1000);
   }
-
+  
   /* Initialize sensor (digital input) */
 
   sensor_init();
@@ -162,7 +246,7 @@ void loop()
 /**
  * PROGRAMMING MODE SETUP
  */
-static void mode_program_setup()
+static void mode_menuconfig_setup()
 {
   /* Activate ISR call from menu buttons */
 
@@ -170,7 +254,11 @@ static void mode_program_setup()
 
   /* Print display with current display_data */
 
-  display_second_screen_print(&display_data);
+  //display_second_screen_print(&display_data);
+
+  display_frame(&frame_menuconfig_screen[0]);
+  display_frame(&frame_menuconfig_screen[1]);
+  display_frame(&frame_limit);
 
   /* Switch to next state */
 
@@ -180,7 +268,7 @@ static void mode_program_setup()
 /**
  * PROGRAMMING MODE LOOP
  */
-static void mode_program_loop()
+static void mode_menuconfig_loop()
 {
   /* Run menu button callback functions */
 
@@ -196,7 +284,9 @@ static void mode_program_loop()
   sensor_limit_unsaved = true;
 
   display_data.limit = sensor_limit_get();
-  display_second_screen_update(&display_data);
+  
+  display_frame(&frame_limit);
+//  display_second_screen_update(&display_data);
 }
 
 /**
@@ -215,11 +305,16 @@ static void mode_counter_setup()
     sensor_limit_unsaved = false;
     sensor_save_settings();
   }
-    
 
   /* Print display with current display_data */
 
-  display_main_screen_print(&display_data);
+  display_frame(&frame_counter_screen[0]);
+  display_frame(&frame_counter_screen[1]);
+  display_frame(&frame_actions);
+  display_frame(&frame_counter);
+  display_frame(&frame_limit);
+
+  // display_counter_screen_print(&display_data);
 
   /* Move to next state */
 
@@ -241,7 +336,11 @@ static void mode_counter_loop()
   display_data.counter = sensor_counter_get();
   display_data.actions = sensor_actions_get();
 
-  display_main_screen_update(&display_data);
+  //display_counter_screen_update(&display_data);
+  
+  display_frame(&frame_actions);
+  display_frame(&frame_counter);
+  display_frame(&frame_limit);
 }
 
 /**

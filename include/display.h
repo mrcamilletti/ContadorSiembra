@@ -3,19 +3,35 @@
 
 #include <Arduino.h>
 
-typedef struct display_params {
+typedef struct {
     uint16_t limit;
     uint16_t counter;
     uint32_t actions;
 } display_params_t;
 
+typedef enum {
+    DISPLAY_TYPE_U8,
+    DISPLAY_TYPE_I8,
+    DISPLAY_TYPE_U16,
+    DISPLAY_TYPE_I16,
+    DISPLAY_TYPE_U32,
+    DISPLAY_TYPE_I32,
+    DISPLAY_TYPE_STR,
+
+    DISPLAY_TYPE_MAX
+} display_type_t;
+
+typedef struct {   
+    display_type_t type;
+    void * data;
+    const char * format;
+    uint8_t pos_x;
+    uint8_t pos_y;
+} display_frame_t;
+
 void display_init();
 void display_clear();
-void display_line(const char * str, uint8_t row);
-void display_main_screen_print(display_params_t * params);
-void display_main_screen_update(display_params_t * params);
-void display_second_screen_print(display_params_t * params);
-void display_second_screen_update(display_params_t * params);
+bool display_frame(display_frame_t * frame);
 
 void menu_button_init();
 bool menu_button_config(uint8_t button, void (*f)(uint8_t port));
