@@ -127,18 +127,13 @@ void menu_button_loop()
   button_pressed_mask = 0;
 }
 
-void menu_button_isr_ts(unsigned long * ts)
+void menu_button_isr(unsigned long * ts)
 {
   if (*ts - time_menu < BUTTON_DEBOUNCE_MS)
     return;
   
   button_pressed_mask |= (~(PINB) & button_callaback_mask);  /* LOW VALUE = PRESSED*/  
   time_menu = *ts;
-}
-
-void menu_button_isr() {
-  unsigned long ts = millis();
-  menu_button_isr_ts(&ts);
 }
 
 bool menu_button_config(uint8_t button, void (*f)(uint8_t port))

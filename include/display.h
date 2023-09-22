@@ -20,8 +20,7 @@ void display_second_screen_update(display_params_t * params);
 void menu_button_init();
 bool menu_button_config(uint8_t button, void (*f)(uint8_t port));
 void menu_button_loop();
-void menu_button_isr();
-void menu_button_isr_ts(unsigned long * ts);
+void menu_button_isr(unsigned long * ts);
 
 void menu_buttons_activate();
 void menu_buttons_deactivate();

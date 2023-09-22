@@ -251,5 +251,6 @@ static void mode_counter_loop()
 /* PIN CHANGE PORT B ISR (MENU CONTROL) */
 ISR(PCINT0_vect)
 {
-  menu_button_isr();
+  unsigned long ts = millis();
+  menu_button_isr(&ts);
 }
