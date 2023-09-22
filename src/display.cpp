@@ -71,10 +71,10 @@ bool display_frame(display_frame_t *frame)
     snprintf(str_buffer, 17, frame->format, *((int16_t *)frame->data));
     break;
   case DISPLAY_TYPE_U32:
-    snprintf(str_buffer, 17, frame->format, *((int16_t *)frame->data));
+    snprintf(str_buffer, 17, frame->format, *((uint32_t *)frame->data));
     break;
   case DISPLAY_TYPE_I32:
-    snprintf(str_buffer, 17, frame->format, *((int16_t *)frame->data));
+    snprintf(str_buffer, 17, frame->format, *((int32_t *)frame->data));
     break;
   case DISPLAY_TYPE_STR:
     snprintf(str_buffer, 17, frame->format, (char *)frame->data);
