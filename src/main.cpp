@@ -47,7 +47,7 @@ static const char * counter_screen[2] = {
 };
 static const char * menuconfig_screen[2] = {
   "CONFIGURACION   ",
-  "> Limite        "
+  "> Divisor:      "
 };
 
 static display_frame_t frame_counter_screen[2] = {
