@@ -144,8 +144,8 @@ static void mode_isr()
 
 static inline void mode_init()
 {
-  DDRD &= ~(bit(DD3)); // set PD3 as input (D3 ext int 1)
-  PORTD |= bit(PORT3); // set PD3 as pullup (D3 ext int 1)
+  DDRD &= ~(bit(DD3)); /* set PD3 as input (D3 ext int 1) */
+  PORTD |= bit(PORT3); /* set PD3 as pullup (D3 ext int 1) */
   attachInterrupt(1, mode_isr, FALLING);
 }
 
@@ -161,7 +161,16 @@ static bool mode_next(enum app_mode next)
 
 static inline void mode_loop()
 {
-  mode_loop_f[mode]();
+  if ((mode < MODE_MAX) && (mode_loop_f[mode]))
+  {
+    mode_loop_f[mode]();    
+  }
+  else
+  {
+    /* Fallback to inital mode */
+    mode = INITIAL_MODE;
+    return;
+  }  
 }
 
 /**
@@ -254,8 +263,6 @@ static void mode_menuconfig_setup()
 
   /* Print display with current display_data */
 
-  //display_second_screen_print(&display_data);
-
   display_frame(&frame_menuconfig_screen[0]);
   display_frame(&frame_menuconfig_screen[1]);
   display_frame(&frame_limit);
@@ -286,7 +293,6 @@ static void mode_menuconfig_loop()
   display_data.limit = sensor_limit_get();
   
   display_frame(&frame_limit);
-//  display_second_screen_update(&display_data);
 }
 
 /**
@@ -314,8 +320,6 @@ static void mode_counter_setup()
   display_frame(&frame_counter);
   display_frame(&frame_limit);
 
-  // display_counter_screen_print(&display_data);
-
   /* Move to next state */
 
   mode_next(MODE_COUNTER_LOOP);
@@ -335,9 +339,7 @@ static void mode_counter_loop()
 
   display_data.counter = sensor_counter_get();
   display_data.actions = sensor_actions_get();
-
-  //display_counter_screen_update(&display_data);
-  
+ 
   display_frame(&frame_actions);
   display_frame(&frame_counter);
   display_frame(&frame_limit);
