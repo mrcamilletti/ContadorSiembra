@@ -4,6 +4,7 @@
 #include "LiquidCrystal_PCF8574.h"
 
 #include "project.h"
+#include "fsm.h"
 #include "relay.h"
 #include "sensor.h"
 #include "display.h"
@@ -16,22 +17,11 @@ static bool sensor_limit_unsaved = false;
 /* APP MODE MANAGEMENT PRIVATE VARIABLES */
 
 static volatile unsigned long mode_button_ts = 0;
-static enum app_mode mode = INITIAL_MODE;
 static void mode_isr();
-static bool mode_next(enum app_mode next_mode);
-
-static void mode_menuconfig_setup();
-static void mode_menuconfig_loop();
-static void mode_counter_setup();
-static void mode_counter_loop();
-
-/* APP MODE ARRAY OF SETUP/LOOP FUNCTIONS */
-
-static void (*mode_loop_f[MODE_MAX])(void) = {
-    mode_menuconfig_setup,
-    mode_menuconfig_loop,
-    mode_counter_setup,
-    mode_counter_loop};
+static void mode_menuconfig_setup(int state);
+static void mode_menuconfig_loop(int state);
+static void mode_counter_setup(int state);
+static void mode_counter_loop(int state);
 
 /**
  * SCREEN CONTENT
@@ -128,18 +118,17 @@ static void mode_isr()
 {
   DEBOUNCE_ISR(mode_button_ts, BUTTON_DEBOUNCE_MS);
 
-  switch (mode)
-  {
-  case MODE_PROGRAM_LOOP:
-    mode = MODE_COUNTER_SETUP;
-    break;
-  case MODE_COUNTER_LOOP:
-    mode = MODE_PROGRAM_SETUP;
-    break;
+  /* CHECK AND MOVE FROM CURRENT FSM STATE */
 
-  default:
-    break;
+  if (fsm_switch_from_isr(MODE_MENUCONFIG_LOOP, MODE_COUNTER_SETUP) == 0)
+  {
+    /* SUCCESFUL, EXIT */
+    return;
   }
+
+  /* ELSE CHECK LAST ONE */
+
+  fsm_switch_from_isr(MODE_COUNTER_LOOP, MODE_MENUCONFIG_SETUP);
 }
 
 static inline void mode_init()
@@ -147,31 +136,15 @@ static inline void mode_init()
   DDRD &= ~(bit(DD3)); /* set PD3 as input (D3 ext int 1) */
   PORTD |= bit(PORT3); /* set PD3 as pullup (D3 ext int 1) */
   attachInterrupt(1, mode_isr, FALLING);
+
+  fsm_add_state(MODE_MENUCONFIG_SETUP, mode_menuconfig_setup);
+  fsm_add_state(MODE_MENUCONFIG_LOOP, mode_menuconfig_loop);
+  fsm_add_state(MODE_COUNTER_SETUP, mode_counter_setup);
+  fsm_add_state(MODE_COUNTER_LOOP, mode_counter_loop);
+
+  fsm_start(INITIAL_MODE);
 }
 
-static bool mode_next(enum app_mode next)
-{
-  if (!(next < MODE_MAX))
-    return false;
-
-  mode = next;
-
-  return true;
-}
-
-static inline void mode_loop()
-{
-  if ((mode < MODE_MAX) && (mode_loop_f[mode]))
-  {
-    mode_loop_f[mode]();    
-  }
-  else
-  {
-    /* Fallback to inital mode */
-    mode = INITIAL_MODE;
-    return;
-  }  
-}
 
 /**
  * GENERAL SETUP
@@ -230,7 +203,7 @@ void setup()
 
   /* Initialize app mode switch button and callbacks */
 
-  mode_init();
+  mode_init(); 
 
   /* Update variables */
   
@@ -245,7 +218,7 @@ void loop()
 {
   /* STATE MACHINE LOOP*/
 
-  mode_loop();
+  fsm_loop();
 
   /* IO CHECK LOOP */
 
@@ -255,7 +228,7 @@ void loop()
 /**
  * PROGRAMMING MODE SETUP
  */
-static void mode_menuconfig_setup()
+static void mode_menuconfig_setup(int state)
 {
   /* Activate ISR call from menu buttons */
 
@@ -269,13 +242,13 @@ static void mode_menuconfig_setup()
 
   /* Switch to next state */
 
-  mode_next(MODE_PROGRAM_LOOP);
+  fsm_switch_to(MODE_MENUCONFIG_LOOP);
 }
 
 /**
  * PROGRAMMING MODE LOOP
  */
-static void mode_menuconfig_loop()
+static void mode_menuconfig_loop(int state)
 {
   /* Run menu button callback functions */
 
@@ -298,7 +271,7 @@ static void mode_menuconfig_loop()
 /**
  * COUNTER MODE SETUP
  */
-static void mode_counter_setup()
+static void mode_counter_setup(int state)
 {
   /* Deactivate ISR call from menu buttons */
 
@@ -322,13 +295,13 @@ static void mode_counter_setup()
 
   /* Move to next state */
 
-  mode_next(MODE_COUNTER_LOOP);
+  fsm_switch_to(MODE_COUNTER_LOOP);
 }
 
 /**
  * COUNTER MODE LOOP
  */
-static void mode_counter_loop()
+static void mode_counter_loop(int state)
 {
   /* Continue if new data available, if not return */
 
