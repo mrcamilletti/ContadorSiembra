@@ -3,7 +3,7 @@
 
 static uint32_t fsm_declared_states;
 static fsm_function_t fsm_states[FSM_STATES_MAX];
-FSM_STATES_TYPEDEF fsm_current_state;
+fsm_state_t fsm_current_state;
 
 uint8_t fsm_started = 0;
 
@@ -13,7 +13,7 @@ int fsm_add_state(fsm_state_t state, fsm_function_t cb)
         return -ENOMEM;
 
     if (fsm_declared_states & (1 << state))
-        return -EINVAL;
+        return -EINVAL;    
     
     fsm_declared_states |= (1 << state);
     fsm_states[state] = cb;
