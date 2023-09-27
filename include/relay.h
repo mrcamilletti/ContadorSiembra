@@ -5,7 +5,7 @@
 
 void relay_init();
 void relay_on();
-void relay_on_from_isr(unsigned long * ts);
+void relay_on_from_isr(const unsigned long * ts);
 void relay_off();
 void relay_loop();
 uint8_t relay_status();

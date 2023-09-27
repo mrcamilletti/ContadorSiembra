@@ -24,7 +24,7 @@ void relay_on()
   time_relay = millis();
 }
 
-void relay_on_from_isr(unsigned long * ts)
+void relay_on_from_isr(const unsigned long * ts)
 {
   PORTB |= (bit(PORT2)); // Enable PORT B ISR
   time_relay = *ts;

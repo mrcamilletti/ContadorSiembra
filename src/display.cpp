@@ -24,9 +24,6 @@ static uint8_t button_pressed_mask = 0;
 
 void display_init()
 {
-  DDRC &= ~(bit(DD4) | bit(DD5));     // Set pins as inputs
-  PORTC |= (bit(PORT4) | bit(PORT5)); // Set pull-up
-
   lcd.begin(16, 2);
   lcd.noCursor();
   lcd.setBacklight(1);
@@ -113,17 +110,17 @@ void menu_button_loop()
   button_pressed_mask = 0;
 }
 
-void menu_button_isr(unsigned long *ts)
+void menu_button_isr(const unsigned long *ts)
 {
   if (*ts - time_menu < BUTTON_DEBOUNCE_MS)
     return;
 
-  button_pressed_mask |= (~(PINB)&button_callaback_mask); /* LOW VALUE = PRESSED*/
+  button_pressed_mask |= (~(PINB) & button_callaback_mask); /* LOW VALUE = PRESSED*/
   time_menu = *ts;
 }
 
 bool menu_button_config(uint8_t button, void (*f)(uint8_t port))
-{
+{  
   if (!(button < 8))
     return false;
 
@@ -136,40 +133,6 @@ bool menu_button_config(uint8_t button, void (*f)(uint8_t port))
 
   button_callaback_vector[button] = f;
   button_callaback_mask |= bit(button);
-  return true;
-}
-
-bool menu_button_up()
-{
-  return ((PINB & bit(PINB0)) == 0);
-}
-
-bool menu_button_down()
-{
-  return ((PINB & bit(PINB1)) == 0);
-}
-
-bool menu_button_up_isr(unsigned long *ts)
-{
-  if (*ts - time_menu < BUTTON_DEBOUNCE_MS)
-    return false;
-
-  if ((PINB & bit(PINB0)) > 0)
-    return false;
-
-  time_menu = *ts;
-  return true;
-}
-
-bool menu_button_down_isr(unsigned long *ts)
-{
-  if (*ts - time_menu < BUTTON_DEBOUNCE_MS)
-    return false;
-
-  if ((PINB & bit(PINB1)) > 0)
-    return false;
-
-  time_menu = *ts;
   return true;
 }
 
